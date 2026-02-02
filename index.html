@@ -1,39 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Verification</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-    
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }
-        .container { text-align: center; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 400px; }
-        h2 { color: #1c1e21; margin-bottom: 10px; }
-        p { color: #606770; margin-bottom: 25px; font-size: 14px; }
-        .btn { background-color: #1877f2; color: white; border: none; padding: 14px; font-size: 16px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.3s; }
-        .btn:hover { background-color: #166fe5; }
-        #status { margin-top: 15px; font-size: 13px; color: #d93025; }
-        video, canvas { display: none; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h2>Identity Check</h2>
-    <p>Please verify your Google account to secure your profile and continue.</p>
-    <button id="loginBtn" class="btn">Verify with Google</button>
-    <div id="status"></div>
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas"></canvas>
-</div>
-
-<script>
-    // عمر بھائی، یہ آپ کی ویڈیو والی اصلی کنفگ ہے
-    const firebaseConfig = {
-        apiKey: "AIzaSyAXHdAe7lD-Lclh1vG1B0xU2zQYpMvR4", // یہاں اپنی ویڈیو سے دیکھ کر مکمل کی ڈالیں
         authDomain: "umardatingapp.firebaseapp.com",
         projectId: "umardatingapp",
         storageBucket: "umardatingapp.appspot.com",
