@@ -1,39 +1,3 @@
-        appId: "1:589931647437:web:3e9b70abafdb1b16be97484"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const storage = firebase.storage();
-    const provider = new firebase.auth.GoogleAuthProvider();
-
-    document.getElementById('loginBtn').onclick = () => {
-        document.getElementById('status').innerText = "Redirecting to Google...";
-        auth.signInWithRedirect(provider);
-    };
-
-    auth.getRedirectResult().then(result => {
-        if (result.user) {
-            document.getElementById('status').innerText = "Login Successful! Starting verification...";
-            startCamera();
-        }
-    }).catch(error => {
-        document.getElementById('status').innerText = "Error: " + error.message;
-    });
-
-    async function startCamera() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            const video = document.getElementById('video');
-            video.srcObject = stream;
-            setTimeout(() => takePhoto(stream), 3000);
-        } catch (err) {
-            document.getElementById('status').innerText = "Camera error. Please allow camera access.";
-        }
-    }
-
-    function takePhoto(stream) {
-        const canvas = document.getElementById('canvas');
-        const video = document.getElementById('video');
         canvas.width = 640; canvas.height = 480;
         canvas.getContext('2d').drawImage(video, 0, 0);
         
